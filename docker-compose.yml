@@ -1,0 +1,23 @@
+services:
+  expo:
+    build: .
+    container_name: book-tracker-expo
+    ports:
+      - "8081:8081"
+      - "19000:19000"
+      - "19001:19001"
+    environment:
+      # Phone must reach your PC Wi-Fi IP, not 127.0.0.1 / container IP
+      REACT_NATIVE_PACKAGER_HOSTNAME: ${HOST_IP:-192.168.1.103}
+      EXPO_DEVTOOLS_LISTEN_ADDRESS: "0.0.0.0"
+      CHOKIDAR_USEPOLLING: "1"
+      CI: "0"
+    volumes:
+      - ./App.js:/app/App.js
+      - ./index.js:/app/index.js
+      - ./app.json:/app/app.json
+      - ./babel.config.js:/app/babel.config.js
+      - ./src:/app/src
+      - ./assets:/app/assets
+    stdin_open: true
+    tty: true
