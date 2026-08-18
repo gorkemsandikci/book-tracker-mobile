@@ -92,7 +92,13 @@ const BookDetailScreen = ({ navigation, route }) => {
           },
         ]}
       />
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+        showsVerticalScrollIndicator
+      >
         <View style={styles.hero}>
           <BookCover uri={book.coverUri} color={book.coverColor} title={book.title} />
           <View style={styles.heroText}>
@@ -170,8 +176,13 @@ const BookDetailScreen = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+    minHeight: 0,
+  },
   content: {
     paddingBottom: spacing.xxl,
+    flexGrow: 1,
   },
   hero: {
     flexDirection: 'row',

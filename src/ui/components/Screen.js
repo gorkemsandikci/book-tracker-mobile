@@ -18,6 +18,7 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
+    minHeight: 0,
   },
   padded: {
     paddingHorizontal: spacing.md,
