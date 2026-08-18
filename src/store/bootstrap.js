@@ -12,6 +12,16 @@ const persistAll = async (authors, books, lists) => {
   ]);
 };
 
+const normalizeBook = (book) => ({
+  genre: 'Uncategorized',
+  status: 'toRead',
+  progress: 0,
+  coverColor: '#5B4636',
+  isFavorite: false,
+  rating: 0,
+  ...book,
+});
+
 export const applySeedData = () => async (dispatch) => {
   dispatch(setAuthors(SEED_AUTHORS));
   dispatch(setBooks(SEED_BOOKS));
@@ -40,7 +50,7 @@ export const loadAppData = () => async (dispatch) => {
     }
 
     dispatch(setAuthors(authors));
-    dispatch(setBooks(books));
+    dispatch(setBooks(books.map(normalizeBook)));
     dispatch(setLists(lists.length > 0 ? lists : SEED_LISTS));
 
     if (lists.length === 0) {

@@ -22,6 +22,11 @@ const AddBookScreen = ({ navigation }) => {
       title,
       authorId: selectedAuthor,
       notes,
+      genre: 'Uncategorized',
+      status: 'toRead',
+      progress: 0,
+      isFavorite: false,
+      rating: 0,
     };
     dispatch(addBook(newBook));
     dispatch(saveBooks());

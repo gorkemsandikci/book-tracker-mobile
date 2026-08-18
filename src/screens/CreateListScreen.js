@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 import { useDispatch } from 'react-redux';
+import { Screen, ScreenHeader, TextField, PrimaryButton, spacing } from '../ui';
 import { addList, saveLists } from '../store/listSlice';
 
 const CreateListScreen = ({ navigation }) => {
@@ -16,53 +17,33 @@ const CreateListScreen = ({ navigation }) => {
 
     dispatch(addList({ name: name.trim(), description: description.trim() }));
     dispatch(saveLists());
-    setName('');
-    setDescription('');
     navigation.goBack();
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>Create List</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="List name (e.g. Want to Read)"
+    <Screen>
+      <ScreenHeader title="New list" onBack={() => navigation.goBack()} />
+      <TextField
+        placeholder="List name (e.g. Book club)"
         value={name}
         onChangeText={setName}
+        style={styles.field}
       />
-      <TextInput
-        style={[styles.input, styles.description]}
+      <TextField
         placeholder="Description (optional)"
         value={description}
         onChangeText={setDescription}
         multiline
+        style={styles.field}
       />
-      <Button title="Save List" onPress={handleCreate} color="#34C759" />
-    </View>
+      <PrimaryButton title="Save list" onPress={handleCreate} />
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    marginBottom: 15,
-    borderRadius: 5,
-  },
-  description: {
-    height: 100,
-    textAlignVertical: 'top',
+  field: {
+    marginBottom: spacing.sm,
   },
 });
 

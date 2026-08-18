@@ -1,194 +1,150 @@
-import React, { useEffect, useMemo } from 'react';
-import { View, Text, FlatList, Button, StyleSheet, Alert, ScrollView } from 'react-native';
-import { useSelector, useDispatch } from 'react-redux';
-import {
-  addBookToList,
-  removeBookFromList,
-  saveLists,
-} from '../store/listSlice';
+import React, { useMemo } from 'react';
+import { Alert, FlatList, StyleSheet } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { Screen, ScreenHeader, AppText, BookListItem, spacing } from '../ui';
+import { addBookToList, removeBookFromList, saveLists } from '../store/listSlice';
+import { toggleFavorite, saveBooks } from '../store/bookSlice';
+
+export const FAVORITES_LIST_ID = 'favorites';
 
 const ListDetailScreen = ({ navigation, route }) => {
-  const { listId, addBookId } = route.params || {};
+  const { listId } = route.params || {};
   const dispatch = useDispatch();
-  const list = useSelector(state => state.lists.items.find(item => item.id === listId));
+  const customList = useSelector(state => state.lists.items.find(item => item.id === listId));
   const books = useSelector(state => state.books.items);
   const authors = useSelector(state => state.authors.items);
+  const isFavorites = listId === FAVORITES_LIST_ID;
 
-  useEffect(() => {
-    if (list) {
-      navigation.setOptions({ title: list.name });
+  const list = useMemo(() => {
+    if (isFavorites) {
+      return {
+        id: FAVORITES_LIST_ID,
+        name: 'Favorites',
+        description: 'Books you marked with a heart.',
+        bookIds: books.filter(book => book.isFavorite).map(book => book.id),
+      };
     }
-  }, [list, navigation]);
-
-  useEffect(() => {
-    if (!addBookId || !listId) return;
-    dispatch(addBookToList({ listId, bookId: addBookId }));
-    dispatch(saveLists());
-    navigation.setParams({ addBookId: null });
-  }, [addBookId, listId, dispatch, navigation]);
+    return customList;
+  }, [isFavorites, customList, books]);
 
   const getAuthorName = (authorId) => {
-    const author = authors.find(a => a.id === authorId);
+    const author = authors.find(item => item.id === authorId);
     return author ? author.name : 'Unknown';
   };
 
   const listBooks = useMemo(() => {
     if (!list) return [];
-    return list.bookIds
-      .map(id => books.find(book => book.id === id))
-      .filter(Boolean);
+    return list.bookIds.map(id => books.find(book => book.id === id)).filter(Boolean);
   }, [list, books]);
 
   const availableBooks = useMemo(() => {
     if (!list) return [];
+    if (isFavorites) {
+      return books.filter(book => !book.isFavorite);
+    }
     return books.filter(book => !list.bookIds.includes(book.id));
-  }, [list, books]);
+  }, [list, books, isFavorites]);
 
   if (!list) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.emptyMessage}>List not found.</Text>
-        <Button title="Back" onPress={() => navigation.goBack()} />
-      </View>
+      <Screen>
+        <ScreenHeader title="List" onBack={() => navigation.goBack()} />
+        <AppText variant="author">List not found.</AppText>
+      </Screen>
     );
   }
 
-  const handleRemove = (bookId) => {
-    dispatch(removeBookFromList({ listId, bookId }));
-    dispatch(saveLists());
-  };
-
-  const handleAddBook = (bookId) => {
+  const addBookToThisList = (bookId) => {
+    if (isFavorites) {
+      const book = books.find(item => item.id === bookId);
+      if (book && !book.isFavorite) {
+        dispatch(toggleFavorite(bookId));
+        dispatch(saveBooks());
+      }
+      return;
+    }
     dispatch(addBookToList({ listId, bookId }));
     dispatch(saveLists());
   };
 
-  const showAddPicker = () => {
+  const handleAddBook = () => {
     if (availableBooks.length === 0) {
-      Alert.alert('No books to add', 'All library books are already in this list, or the library is empty.');
+      Alert.alert('Nothing to add', 'Every library book is already in this list.');
       return;
     }
 
-    Alert.alert(
-      'Add from Library',
-      'Choose a book',
-      [
-        ...availableBooks.slice(0, 8).map(book => ({
-          text: book.title,
-          onPress: () => handleAddBook(book.id),
-        })),
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+    Alert.alert('Add from library', 'Choose a book', [
+      ...availableBooks.slice(0, 8).map(book => ({
+        text: book.title,
+        onPress: () => addBookToThisList(book.id),
+      })),
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.bookItem}>
-      <Text style={styles.bookTitle}>{item.title}</Text>
-      <Text style={styles.author}>Author: {getAuthorName(item.authorId)}</Text>
-      <Button title="Remove from List" onPress={() => handleRemove(item.id)} color="#ff9500" />
-    </View>
-  );
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>{list.name}</Text>
-      {list.description ? <Text style={styles.description}>{list.description}</Text> : null}
-      <View style={styles.actions}>
-        <Button title="Add from Library" onPress={showAddPicker} color="#007AFF" />
-        <View style={styles.spacer} />
-        <Button title="Browse Library" onPress={() => navigation.navigate('Library')} />
-      </View>
-      {listBooks.length === 0 ? (
-        <Text style={styles.emptyMessage}>This list is empty. Add books from your library.</Text>
-      ) : (
-        <FlatList
-          style={styles.list}
-          data={listBooks}
-          renderItem={renderItem}
-          keyExtractor={item => item.id}
-          ListFooterComponent={
-            availableBooks.length > 0 ? (
-              <ScrollView horizontal style={styles.availableRow} contentContainerStyle={styles.availableContent}>
-                <Text style={styles.availableLabel}>Quick add: </Text>
-                {availableBooks.slice(0, 5).map(book => (
-                  <View key={book.id} style={styles.quickAdd}>
-                    <Button title={`+ ${book.title}`} onPress={() => handleAddBook(book.id)} color="#34C759" />
-                  </View>
-                ))}
-              </ScrollView>
-            ) : null
-          }
-        />
-      )}
-    </View>
+    <Screen>
+      <ScreenHeader
+        title={list.name}
+        onBack={() => navigation.goBack()}
+        actions={[
+          {
+            name: 'add-circle-outline',
+            onPress: handleAddBook,
+            accessibilityLabel: 'Add from library',
+          },
+        ]}
+      />
+      {list.description ? (
+        <AppText variant="author" style={styles.description}>
+          {list.description}
+        </AppText>
+      ) : null}
+      <FlatList
+        data={listBooks}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <BookListItem
+            title={item.title}
+            author={getAuthorName(item.authorId)}
+            genre={item.genre || 'Uncategorized'}
+            status={item.status || 'toRead'}
+            progress={item.progress ?? 0}
+            rating={item.rating || 0}
+            isFavorite={!!item.isFavorite}
+            coverUri={item.coverUri}
+            coverColor={item.coverColor}
+            onPress={() => navigation.navigate('BookDetail', { bookId: item.id })}
+            onToggleFavorite={() => {
+              dispatch(toggleFavorite(item.id));
+              dispatch(saveBooks());
+            }}
+          />
+        )}
+        ListEmptyComponent={
+          <AppText variant="author" align="center" style={styles.empty}>
+            {isFavorites
+              ? 'No favorites yet. Tap the heart on a book to add it here.'
+              : 'This list is empty. Add books from your library.'}
+          </AppText>
+        }
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+      />
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
   description: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
-  },
-  actions: {
-    marginBottom: 12,
-  },
-  spacer: {
-    height: 8,
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
   },
   list: {
-    flex: 1,
+    paddingBottom: spacing.xl,
   },
-  bookItem: {
-    padding: 15,
-    borderRadius: 5,
-    backgroundColor: '#f9f9f9',
-    marginBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  bookTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  author: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 10,
-  },
-  emptyMessage: {
-    textAlign: 'center',
-    marginTop: 40,
-    fontSize: 16,
-    color: '#888',
-  },
-  availableRow: {
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  availableContent: {
-    alignItems: 'center',
-    paddingRight: 20,
-  },
-  availableLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginRight: 8,
-  },
-  quickAdd: {
-    marginRight: 8,
+  empty: {
+    marginTop: spacing.xxl,
   },
 });
 

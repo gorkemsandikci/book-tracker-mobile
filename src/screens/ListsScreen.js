@@ -1,121 +1,96 @@
-import React from 'react';
-import { View, Text, FlatList, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useMemo } from 'react';
+import { Alert, FlatList, StyleSheet } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { Screen, ScreenHeader, ListCard, AppText, spacing } from '../ui';
 import { removeList, saveLists } from '../store/listSlice';
+import { FAVORITES_LIST_ID } from './ListDetailScreen';
 
 const ListsScreen = ({ navigation }) => {
   const lists = useSelector(state => state.lists.items);
+  const books = useSelector(state => state.books.items);
   const dispatch = useDispatch();
+  const favoriteCount = books.filter(book => book.isFavorite).length;
 
-  const handleDeleteList = (id, name) => {
-    Alert.alert(
-      'Delete List',
-      `Delete "${name}"? Books stay in your library.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            dispatch(removeList(id));
-            dispatch(saveLists());
-          },
-        },
-      ]
-    );
-  };
-
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.listItem}
-      onPress={() => navigation.navigate('ListDetail', { listId: item.id })}
-    >
-      <Text style={styles.listName}>{item.name}</Text>
-      {item.description ? <Text style={styles.description}>{item.description}</Text> : null}
-      <Text style={styles.count}>{item.bookIds.length} book{item.bookIds.length === 1 ? '' : 's'}</Text>
-      <View style={styles.row}>
-        <Button
-          title="Open"
-          onPress={() => navigation.navigate('ListDetail', { listId: item.id })}
-          color="#007AFF"
-        />
-        <View style={styles.spacer} />
-        <Button
-          title="Delete"
-          onPress={() => handleDeleteList(item.id, item.name)}
-          color="#ff0000"
-        />
-      </View>
-    </TouchableOpacity>
+  const rows = useMemo(
+    () => [
+      {
+        id: FAVORITES_LIST_ID,
+        name: 'Favorites',
+        description: 'Books you marked with a heart.',
+        count: favoriteCount,
+        icon: 'heart',
+        pinned: true,
+      },
+      ...lists.map(list => ({
+        id: list.id,
+        name: list.name,
+        description: list.description,
+        count: list.bookIds.length,
+        pinned: false,
+      })),
+    ],
+    [lists, favoriteCount]
   );
 
+  const handleDeleteList = (id, name) => {
+    Alert.alert('Delete list', `Delete "${name}"? Books stay in your library.`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          dispatch(removeList(id));
+          dispatch(saveLists());
+        },
+      },
+    ]);
+  };
+
+  const openList = (id) => {
+    navigation.navigate('ListDetail', { listId: id });
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>My Lists</Text>
-      <Button title="Create List" onPress={() => navigation.navigate('CreateList')} color="#34C759" />
-      {lists.length === 0 ? (
-        <Text style={styles.emptyMessage}>No lists yet. Create Want to Read, Already Read, or any custom list.</Text>
-      ) : (
-        <FlatList
-          style={styles.list}
-          data={lists}
-          renderItem={renderItem}
-          keyExtractor={item => item.id}
-        />
-      )}
-    </View>
+    <Screen>
+      <ScreenHeader
+        title="Lists"
+        actions={[
+          {
+            name: 'add-circle-outline',
+            onPress: () => navigation.navigate('CreateList'),
+            accessibilityLabel: 'Create list',
+          },
+        ]}
+      />
+      <AppText variant="author" style={styles.intro}>
+        Open Favorites or any list you create.
+      </AppText>
+      <FlatList
+        data={rows}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <ListCard
+            name={item.name}
+            description={item.description}
+            count={item.count}
+            icon={item.icon}
+            onPress={() => openList(item.id)}
+            onDelete={item.pinned ? undefined : () => handleDeleteList(item.id, item.name)}
+          />
+        )}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+      />
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
+  intro: {
+    marginBottom: spacing.md,
   },
   list: {
-    marginTop: 12,
-  },
-  listItem: {
-    padding: 15,
-    borderRadius: 5,
-    backgroundColor: '#f9f9f9',
-    marginBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  listName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  description: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 6,
-  },
-  count: {
-    fontSize: 13,
-    color: '#888',
-    marginBottom: 10,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  spacer: {
-    width: 12,
-  },
-  emptyMessage: {
-    textAlign: 'center',
-    marginTop: 50,
-    fontSize: 16,
-    color: '#888',
+    paddingBottom: spacing.xl,
   },
 });
 
