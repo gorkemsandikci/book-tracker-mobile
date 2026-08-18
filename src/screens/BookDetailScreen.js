@@ -1,5 +1,6 @@
-import React from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Platform, StyleSheet, View } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Screen,
@@ -29,6 +30,7 @@ const BookDetailScreen = ({ navigation, route }) => {
   const book = useSelector(state => state.books.items.find(item => item.id === bookId));
   const authors = useSelector(state => state.authors.items);
   const lists = useSelector(state => state.lists.items);
+  const [scrollHeight, setScrollHeight] = useState(0);
 
   if (!book) {
     return (
@@ -92,97 +94,128 @@ const BookDetailScreen = ({ navigation, route }) => {
           },
         ]}
       />
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        nestedScrollEnabled
-        showsVerticalScrollIndicator
+      <View
+        collapsable={false}
+        style={styles.scrollHost}
+        onLayout={(event) => {
+          const nextHeight = Math.floor(event.nativeEvent.layout.height);
+          if (nextHeight > 0 && nextHeight !== scrollHeight) {
+            setScrollHeight(nextHeight);
+          }
+        }}
       >
-        <View style={styles.hero}>
-          <BookCover uri={book.coverUri} color={book.coverColor} title={book.title} />
-          <View style={styles.heroText}>
-            <AppText variant="bookTitle">{book.title}</AppText>
-            <AppText variant="author" style={styles.author}>
-              {authorName}
-            </AppText>
-            <AppText variant="caption">{book.genre || 'Uncategorized'}</AppText>
+        <ScrollView
+          style={[styles.scroll, scrollHeight > 0 ? { height: scrollHeight } : null]}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled
+          bounces
+          alwaysBounceVertical
+          showsVerticalScrollIndicator
+        >
+          <View style={styles.hero}>
+            <BookCover uri={book.coverUri} color={book.coverColor} title={book.title} />
+            <View style={styles.heroText}>
+              <AppText variant="bookTitle">{book.title}</AppText>
+              <AppText variant="author" style={styles.author}>
+                {authorName}
+              </AppText>
+              <AppText variant="caption">{book.genre || 'Uncategorized'}</AppText>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.card}>
-          <View style={styles.favoriteRow}>
-            <AppText variant="bookTitle">Favorite</AppText>
-            <FavoriteButton active={!!book.isFavorite} onPress={persistFavorite} size={26} />
-          </View>
-          <AppText variant="caption" style={styles.hint}>
-            Save this title to your favorites.
-          </AppText>
-        </View>
-
-        <View style={styles.card}>
-          <AppText variant="bookTitle">Your rating</AppText>
-          <View style={styles.stars}>
-            <StarRating value={book.rating || 0} onChange={persistRating} size={28} />
-          </View>
-          <AppText variant="caption">
-            {book.rating ? `${book.rating} out of 5` : 'Not rated yet'}
-          </AppText>
-        </View>
-
-        <View style={styles.card}>
-          <AppText variant="bookTitle">Lists</AppText>
-          <AppText variant="caption" style={styles.hint}>
-            Add this book to as many lists as you like.
-          </AppText>
-          <CheckRow
-            label="Favorites"
-            checked={!!book.isFavorite}
-            onPress={persistFavorite}
-          />
-          {lists.map(list => (
-            <CheckRow
-              key={list.id}
-              label={list.name}
-              checked={list.bookIds.includes(book.id)}
-              onPress={() => toggleList(list)}
-            />
-          ))}
-          <View style={styles.create}>
-            <PrimaryButton
-              title="Open Favorites"
-              onPress={() => navigation.navigate('ListDetail', { listId: FAVORITES_LIST_ID })}
-            />
-          </View>
-          <View style={styles.create}>
-            <PrimaryButton
-              title="Create new list"
-              onPress={() => navigation.navigate('CreateList')}
-            />
-          </View>
-        </View>
-
-        {book.notes ? (
           <View style={styles.card}>
-            <AppText variant="bookTitle">Notes</AppText>
-            <AppText variant="body" style={styles.hint}>
-              {book.notes}
+            <View style={styles.favoriteRow}>
+              <AppText variant="bookTitle">Favorite</AppText>
+              <FavoriteButton active={!!book.isFavorite} onPress={persistFavorite} size={26} />
+            </View>
+            <AppText variant="caption" style={styles.hint}>
+              Save this title to your favorites.
             </AppText>
           </View>
-        ) : null}
-      </ScrollView>
+
+          <View style={styles.card}>
+            <AppText variant="bookTitle">Your rating</AppText>
+            <View style={styles.stars}>
+              <StarRating value={book.rating || 0} onChange={persistRating} size={28} />
+            </View>
+            <AppText variant="caption">
+              {book.rating ? `${book.rating} out of 5` : 'Not rated yet'}
+            </AppText>
+          </View>
+
+          <View style={styles.card}>
+            <AppText variant="bookTitle">Lists</AppText>
+            <AppText variant="caption" style={styles.hint}>
+              Add this book to as many lists as you like.
+            </AppText>
+            <CheckRow
+              label="Favorites"
+              checked={!!book.isFavorite}
+              onPress={persistFavorite}
+            />
+            {lists.map(list => (
+              <CheckRow
+                key={list.id}
+                label={list.name}
+                checked={list.bookIds.includes(book.id)}
+                onPress={() => toggleList(list)}
+              />
+            ))}
+            <View style={styles.create}>
+              <PrimaryButton
+                title="Open Favorites"
+                onPress={() => navigation.navigate('ListDetail', { listId: FAVORITES_LIST_ID })}
+              />
+            </View>
+            <View style={styles.create}>
+              <PrimaryButton
+                title="Create new list"
+                onPress={() => navigation.navigate('CreateList')}
+              />
+            </View>
+          </View>
+
+          {book.notes ? (
+            <View style={styles.card}>
+              <AppText variant="bookTitle">Notes</AppText>
+              <AppText variant="body" style={styles.hint}>
+                {book.notes}
+              </AppText>
+            </View>
+          ) : null}
+        </ScrollView>
+      </View>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
+  scrollHost: {
+    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    minHeight: 0,
+    overflow: 'hidden',
+    ...Platform.select({
+      web: {
+        height: '100%',
+        maxHeight: '100%',
+      },
+    }),
+  },
   scroll: {
     flex: 1,
-    minHeight: 0,
+    ...Platform.select({
+      web: {
+        overflow: 'auto',
+        touchAction: 'pan-y',
+      },
+    }),
   },
   content: {
-    paddingBottom: spacing.xxl,
-    flexGrow: 1,
+    paddingBottom: 80,
+    flexGrow: 0,
   },
   hero: {
     flexDirection: 'row',

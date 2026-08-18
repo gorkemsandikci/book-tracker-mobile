@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { TabBar } from '../ui';
 import BooksScreen from '../screens/BooksScreen';
 import ListsScreen from '../screens/ListsScreen';
@@ -13,7 +13,7 @@ import CreateListScreen from '../screens/CreateListScreen';
 import BookDetailScreen from '../screens/BookDetailScreen';
 
 const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
+const Stack = createNativeStackNavigator();
 
 function MainTabs() {
   return (
@@ -54,14 +54,21 @@ function MainTabs() {
 
 export default function RootNavigator() {
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
-      <Stack.Screen name="BookDetail" component={BookDetailScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AddBook" component={AddBookScreen} options={{ title: 'Add Book' }} />
-      <Stack.Screen name="AddAuthor" component={AddAuthorScreen} options={{ title: 'Add Author' }} />
-      <Stack.Screen name="AuthorList" component={AuthorListScreen} options={{ title: 'Authors' }} />
-      <Stack.Screen name="ListDetail" component={ListDetailScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="CreateList" component={CreateListScreen} options={{ headerShown: false }} />
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { flex: 1, backgroundColor: '#F2F2F7' },
+        gestureEnabled: true,
+        fullScreenGestureEnabled: false,
+      }}
+    >
+      <Stack.Screen name="MainTabs" component={MainTabs} />
+      <Stack.Screen name="BookDetail" component={BookDetailScreen} />
+      <Stack.Screen name="AddBook" component={AddBookScreen} options={{ headerShown: true, title: 'Add Book' }} />
+      <Stack.Screen name="AddAuthor" component={AddAuthorScreen} options={{ headerShown: true, title: 'Add Author' }} />
+      <Stack.Screen name="AuthorList" component={AuthorListScreen} options={{ headerShown: true, title: 'Authors' }} />
+      <Stack.Screen name="ListDetail" component={ListDetailScreen} />
+      <Stack.Screen name="CreateList" component={CreateListScreen} />
     </Stack.Navigator>
   );
 }

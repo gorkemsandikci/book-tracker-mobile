@@ -101,6 +101,7 @@ const ListDetailScreen = ({ navigation, route }) => {
         </AppText>
       ) : null}
       <FlatList
+        style={styles.listView}
         data={listBooks}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
@@ -139,6 +140,9 @@ const styles = StyleSheet.create({
   description: {
     marginTop: spacing.xs,
     marginBottom: spacing.sm,
+  },
+  listView: {
+    flex: 1,
   },
   list: {
     paddingBottom: spacing.xl,

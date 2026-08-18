@@ -104,6 +104,7 @@ const BooksScreen = ({ navigation }) => {
         <SegmentedControl options={FILTERS} value={filter} onChange={setFilter} />
       </View>
       <FlatList
+        style={styles.listView}
         data={visibleBooks}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
@@ -137,6 +138,9 @@ const styles = StyleSheet.create({
   filter: {
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
+  },
+  listView: {
+    flex: 1,
   },
   list: {
     paddingBottom: spacing.xl,

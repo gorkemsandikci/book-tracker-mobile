@@ -66,6 +66,7 @@ const ListsScreen = ({ navigation }) => {
         Open Favorites or any list you create.
       </AppText>
       <FlatList
+        style={styles.listView}
         data={rows}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
@@ -88,6 +89,9 @@ const ListsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   intro: {
     marginBottom: spacing.md,
+  },
+  listView: {
+    flex: 1,
   },
   list: {
     paddingBottom: spacing.xl,
